@@ -1,0 +1,25 @@
+{
+  "entryFile": "src/server.ts",
+  "noImplicitAdditionalProperties": "throw-on-extras",
+  "controllerPathGlobs": ["src/**/controller.ts"],
+  "spec": {
+    "host": "localhost:3000",
+    "basePath": "/api",
+    "schemes": ["http", "https"],
+    "outputDirectory": "src/api",
+    "specVersion": 3,
+    "securityDefinitions": {
+      "cookie": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "IPS_SESSION_ID"
+      }
+    }
+  },
+  "routes": {
+    "basePath": "/api",
+    "routesDir": "src/api",
+    "middleware": "express",
+    "authenticationModule": "./src/authentication.ts"
+  }
+}
