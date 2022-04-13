@@ -1,12 +1,12 @@
 {
-  "entryFile": "src/server.ts",
+  "entryFile": "src/api/server.ts",
   "noImplicitAdditionalProperties": "throw-on-extras",
-  "controllerPathGlobs": ["src/**/controller.ts"],
+  "controllerPathGlobs": ["src/api/**/controller.ts"],
   "spec": {
     "host": "localhost:3000",
     "basePath": "/api",
     "schemes": ["http", "https"],
-    "outputDirectory": "src/api",
+    "outputDirectory": "src/generated",
     "specVersion": 3,
     "securityDefinitions": {
       "cookie": {
@@ -18,8 +18,8 @@
   },
   "routes": {
     "basePath": "/api",
-    "routesDir": "src/api",
+    "routesDir": "src/generated",
     "middleware": "express",
-    "authenticationModule": "./src/authentication.ts"
+    "authenticationModule": "./src/api/authentication.ts"
   }
 }

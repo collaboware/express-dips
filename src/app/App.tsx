@@ -1,13 +1,13 @@
 import React, { useEffect } from 'react'
 import { Routes, Route } from 'react-router-dom'
 
-import { IPSOpenAPI, SolidProfileShape } from './openapi'
+import { IPSOpenApi, SolidProfileShape } from '../generated/openapi'
 
 export interface InitialAppState {
   webId: string
 }
 
-export const api = new IPSOpenAPI({ WITH_CREDENTIALS: true }).default
+export const api = new IPSOpenApi({ WITH_CREDENTIALS: true }).default
 export const App: React.FC<InitialAppState> = ({ webId }) => {
   useEffect(() => {
     if (!webId) {

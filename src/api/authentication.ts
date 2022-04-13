@@ -1,6 +1,6 @@
 import * as express from 'express'
 
-import { sessionStorage } from './User/controller'
+import { sessionStorage } from './storage'
 
 export async function expressAuthentication(
   request: express.Request,

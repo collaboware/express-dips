@@ -5,9 +5,10 @@ import cookieParser from 'cookie-parser'
 import swaggerUi from 'swagger-ui-express'
 import { getSessionFromStorage } from '@inrupt/solid-client-authn-node'
 
-import { RegisterRoutes as RegisterAPIRoutes } from './api/routes'
-import AppRouter from './app/routes'
-import { sessionStorage } from './User/controller'
+import { RegisterRoutes as RegisterAPIRoutes } from '../generated/routes'
+import AppRouter from '../app/routes'
+
+import { sessionStorage } from './storage'
 
 export const server = express()
 
@@ -26,7 +27,9 @@ server.use(
 server.use(cookieParser('super-secret-key-phrase'))
 server.use(bodyParser.json())
 server.use('/docs', swaggerUi.serve, async (_req: Request, res: Response) => {
-  return res.send(swaggerUi.generateHTML(await import('./api/swagger.json')))
+  return res.send(
+    swaggerUi.generateHTML(await import('../generated/swagger.json'))
+  )
 })
 server.use(async (req, res, next) => {
   const sessionId = req.signedCookies.session
