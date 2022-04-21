@@ -8,6 +8,7 @@ import {
   OneToMany,
   ManyToOne,
   OneToOne,
+  FindOptionsWhere,
 } from 'typeorm'
 
 import { User } from '../User/model'
@@ -55,12 +56,26 @@ export enum XSD_DATATYPES {
   anyURI = 'http://www.w3.org/2001/XMLSchema#anyURI',
 }
 
-export interface PropertyCreationParams {
-  domain: string
+interface BaseCreationParams {
+  creator: FindOptionsWhere<User>
 }
 
-export interface ClassCreationParams {
-  inherits: string
+export interface VocabularyCreationParams extends BaseCreationParams {
+  name: string
+  slug?: string
+}
+
+export interface PropertyCreationParams extends BaseCreationParams {
+  name: string
+  slug?: string
+  domain?: string
+  range?: string
+}
+
+export interface ClassCreationParams extends BaseCreationParams {
+  name: string
+  slug?: string
+  inherits?: string
 }
 
 export interface VocabUpdateParams {
@@ -92,13 +107,19 @@ export class Vocabulary extends BaseEntity {
   @OneToMany(() => RdfClass, (rdfClass: RdfClass) => rdfClass.vocab)
   classes: RdfClass[]
 
+  @OneToMany(() => Property, (property: Property) => property.vocab)
+  properties: Property[]
+
+  @Column({ nullable: true })
+  link?: string
+
   @Column()
   name: string
 
   @Column()
   slug: string
 
-  @Column()
+  @Column({ nullable: true })
   description?: string
 }
 
@@ -123,7 +144,7 @@ export class RdfClass extends BaseEntity {
   @Column()
   slug: string
 
-  @Column()
+  @Column({ nullable: true })
   description?: string
 }
 
@@ -133,7 +154,16 @@ export class Property extends BaseEntity {
   id: number
 
   @ManyToOne(() => RdfClass, (rdfClass: RdfClass) => rdfClass.properties)
-  domain: RdfClass
+  domain?: RdfClass
+
+  @ManyToOne(() => RdfClass, (rdfClass: RdfClass) => rdfClass.properties)
+  range?: RdfClass
+
+  @ManyToOne(
+    () => Vocabulary,
+    (vocabulary: Vocabulary) => vocabulary.properties
+  )
+  vocab: Vocabulary
 
   @Column()
   name: string
@@ -141,6 +171,6 @@ export class Property extends BaseEntity {
   @Column()
   slug: string
 
-  @Column()
+  @Column({ nullable: true })
   description?: string
 }

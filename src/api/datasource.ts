@@ -7,9 +7,7 @@ export const IPSDataSource = new DataSource({
   username: 'postgres',
   password: 'postgres',
   database: 'ips',
-  entities: [__dirname + '/**/model.js'],
-  migrations: [__dirname + '/migrations/*.js}'],
+  entities: [__dirname + '/**/model.{js,ts}'],
+  migrations: [__dirname + '/migrations/*.{js,ts}'],
   migrationsTableName: 'custom_migration_table',
-  migrationsRun: true,
-  synchronize: true,
 })

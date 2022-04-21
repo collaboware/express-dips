@@ -46,6 +46,11 @@ server.use(async (req, res, next) => {
       sessionStorage.delete(sessionId)
     }
   }
+  if (process.env.NODE_ENV === 'test') {
+    res.locals.session = {
+      info: { webId: req.headers['test-webid'], isLoggedIn: true },
+    }
+  }
   res.setHeader(
     'Access-Control-Allow-Origin',
     (req.headers.origin ??
