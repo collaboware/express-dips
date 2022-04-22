@@ -9,6 +9,7 @@ import {
   Request,
   Security,
   SuccessResponse,
+  Delete,
 } from 'tsoa'
 
 import {
@@ -170,5 +171,39 @@ export class VocabulariesController extends Controller {
     }
     this.setStatus(404)
     return null
+  }
+
+  @SuccessResponse('201', 'Deleted') // Custom success response
+  @Security('cookie')
+  @Delete('{vocab}')
+  public async deleteVocab(@Path() vocab: string): Promise<boolean> {
+    this.setStatus(201)
+    const vocabulary = await vocabs.delete(vocab)
+    return vocabulary
+  }
+
+  @SuccessResponse('201', 'Deleted') // Custom success response
+  @Security('cookie')
+  @Delete('{vocab}/{propertyOrClass}')
+  public async deletePropertyOrClass(
+    @Path() vocab: string,
+    @Path() propertyOrClass: string
+  ): Promise<boolean> {
+    this.setStatus(201)
+    const property = await vocabs.getProperty(vocab, propertyOrClass)
+    if (property) {
+      const deletedProperty = await vocabs.deleteProperty(
+        vocab,
+        propertyOrClass
+      )
+      return deletedProperty
+    }
+    const rdfClass = await vocabs.getClass(vocab, propertyOrClass)
+    if (rdfClass) {
+      const deletedClass = await vocabs.deleteClass(vocab, propertyOrClass)
+      return deletedClass
+    }
+    this.setStatus(404)
+    return false
   }
 }

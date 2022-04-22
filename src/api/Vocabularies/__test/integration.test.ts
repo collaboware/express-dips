@@ -166,3 +166,52 @@ describe('Post Endpoints', () => {
     expect(res.statusCode).toEqual(404)
   })
 })
+
+describe('Delete Endpoints', () => {
+  it('should delete a vocab', async () => {
+    const vocab = 'solid'
+    const webId = testUserWebId.replace('tester', 'tester4')
+    const res = await TestUtils.requestAs(
+      request(server).delete(`/api/vocabs/${vocab}`).send(),
+      webId
+    )
+    expect(res.statusCode).toEqual(201)
+    expect(res.body).toBeTruthy()
+  })
+
+  it('should delete a class', async () => {
+    const vocab = 'foaf'
+    const cls = 'Agent'
+    const webId = testUserWebId.replace('tester', 'tester5')
+    const res = await TestUtils.requestAs(
+      request(server).delete(`/api/vocabs/${vocab}/${cls}`).send(),
+      webId
+    )
+    expect(res.statusCode).toEqual(201)
+    expect(res.body).toBeTruthy()
+  })
+
+  it('should delete a property', async () => {
+    const vocab = 'foaf'
+    const prop = 'name'
+    const webId = testUserWebId.replace('tester', 'tester6')
+    const res = await TestUtils.requestAs(
+      request(server).delete(`/api/vocabs/${vocab}/${prop}`).send(),
+      webId
+    )
+    expect(res.statusCode).toEqual(201)
+    expect(res.body).toBeTruthy()
+  })
+
+  it('should fail deleting a nonexistent property', async () => {
+    const vocab = 'solid'
+    const webId = testUserWebId.replace('tester', 'tester6')
+    const prop = 'notificationzzz'
+    const res = await TestUtils.requestAs(
+      request(server).delete(`/api/vocabs/${vocab}/${prop}`).send(),
+      webId
+    )
+    expect(res.statusCode).toEqual(404)
+    expect(res.body).toBeFalsy()
+  })
+})

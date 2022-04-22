@@ -132,7 +132,9 @@ export class RdfClass extends BaseEntity {
   @PrimaryGeneratedColumn()
   id: number
 
-  @ManyToOne(() => Vocabulary, (vocabulary: Vocabulary) => vocabulary.classes)
+  @ManyToOne(() => Vocabulary, (vocabulary: Vocabulary) => vocabulary.classes, {
+    onDelete: 'CASCADE',
+  })
   vocab: Vocabulary
 
   @OneToMany(() => Property, (property: Property) => property.domain)
@@ -165,7 +167,10 @@ export class Property extends BaseEntity {
 
   @ManyToOne(
     () => Vocabulary,
-    (vocabulary: Vocabulary) => vocabulary.properties
+    (vocabulary: Vocabulary) => vocabulary.properties,
+    {
+      onDelete: 'CASCADE',
+    }
   )
   vocab: Vocabulary
 

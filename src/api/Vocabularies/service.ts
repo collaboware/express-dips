@@ -134,7 +134,7 @@ export class VocabularyService {
   async createClass(
     vocab: string,
     params: ClassCreationParams
-  ): Promise<Property | RdfClass> {
+  ): Promise<RdfClass> {
     const editedVocab = await vocabRepo.findOne({
       where: { slug: vocab },
       relations: { contributors: true },
@@ -180,11 +180,31 @@ export class VocabularyService {
     slug: string,
     webId: string,
     params: ClassUpdateParams
-  ): Promise<Property | RdfClass> {
+  ): Promise<RdfClass> {
     const vocabulary = await this.getOne(vocab)
     await rdfClassesRepo.update({ slug, vocab: { id: vocabulary?.id } }, params)
 
     await this.addContributor(vocab, { webId })
     return (await this.getClass(vocab, slug)) as RdfClass
+  }
+
+  async delete(slug: string): Promise<boolean> {
+    await vocabRepo.delete({ slug })
+
+    return true
+  }
+
+  async deleteProperty(vocab: string, slug: string): Promise<boolean> {
+    const vocabulary = await this.getOne(vocab)
+    await propertiesRepo.delete({ slug, vocab: { id: vocabulary?.id } })
+
+    return true
+  }
+
+  async deleteClass(vocab: string, slug: string): Promise<boolean> {
+    const vocabulary = await this.getOne(vocab)
+    await rdfClassesRepo.delete({ slug, vocab: { id: vocabulary?.id } })
+
+    return true
   }
 }

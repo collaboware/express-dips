@@ -194,3 +194,44 @@ describe('Update Methods', () => {
     ).toBeTruthy()
   })
 })
+
+describe('Delete Methods', () => {
+  it('should delete a vocab', async () => {
+    const slug = 'solid'
+    const vocabulary = await vocabs.delete(slug)
+    expect(vocabulary).toBeTruthy()
+    const deletedVocabulary = await vocabRepo.findOne({
+      where: { slug: 'solid' },
+      relations: { contributors: true },
+    })
+    expect(deletedVocabulary).toBeNull()
+  })
+
+  it('should delete a class', async () => {
+    const vocab = 'foaf'
+    const cls = 'Person'
+    const deletedClass = await vocabs.deleteClass(vocab, cls)
+    expect(deletedClass).toBeTruthy()
+    const vocabulary = await vocabRepo.findOne({
+      where: { slug: vocab },
+      relations: { classes: true },
+    })
+    expect(
+      !vocabulary?.classes.find((rdfClass) => rdfClass.slug === cls)
+    ).toBeTruthy()
+  })
+
+  it('should delete a property', async () => {
+    const vocab = 'foaf'
+    const prop = 'name'
+    const deletedClass = await vocabs.deleteProperty(vocab, prop)
+    expect(deletedClass).toBeTruthy()
+    const vocabulary = await vocabRepo.findOne({
+      where: { slug: vocab },
+      relations: { properties: true },
+    })
+    expect(
+      !vocabulary?.properties.find((property) => property.slug === prop)
+    ).toBeTruthy()
+  })
+})
