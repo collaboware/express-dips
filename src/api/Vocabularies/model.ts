@@ -68,8 +68,6 @@ export interface VocabularyCreationParams extends BaseCreationParams {
 export interface PropertyCreationParams extends BaseCreationParams {
   name: string
   slug?: string
-  domain?: string
-  range?: string
 }
 
 export interface ClassCreationParams extends BaseCreationParams {

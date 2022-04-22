@@ -1,4 +1,3 @@
-import { Session } from '@inrupt/solid-client-authn-node'
 import express from 'express'
 import {
   Body,
@@ -43,14 +42,28 @@ export class VocabulariesController extends Controller {
     return await vocabs.getProperties(vocab)
   }
 
+  @Get('{vocab}/classes')
+  public async getClasses(@Path() vocab: string): Promise<Property[]> {
+    this.setStatus(200) // set return status 200
+    return await vocabs.getClasses(vocab)
+  }
+
   @Get('{vocab}/{propertyOrClass}')
   public async getPropertyOrClass(
     @Path() vocab: string,
     @Path() propertyOrClass: string
-  ): Promise<void> {
-    console.debug(vocab, propertyOrClass)
-    this.setStatus(201)
-    return
+  ): Promise<Property | RdfClass | null> {
+    this.setStatus(200)
+    const property = await vocabs.getProperty(vocab, propertyOrClass)
+    if (property) {
+      return property
+    }
+    const rdfClass = await vocabs.getClass(vocab, propertyOrClass)
+    if (rdfClass) {
+      return rdfClass
+    }
+    this.setStatus(404)
+    return null
   }
 
   @SuccessResponse('201', 'Created') // Custom success response
@@ -63,7 +76,7 @@ export class VocabulariesController extends Controller {
     this.setStatus(201)
     const vocabulary = await vocabs.create(
       vocab.name,
-      (request as { session?: Session }).session?.info.webId as string,
+      request.res?.locals.session?.info.webId as string,
       vocab.slug
     )
     return vocabulary
@@ -81,7 +94,7 @@ export class VocabulariesController extends Controller {
     const createdProperty = vocabs.createProperty(vocab, {
       ...requestBody,
       creator: {
-        webId: (request as { session?: Session }).session?.info.webId as string,
+        webId: request.res?.locals.session?.info.webId as string,
       },
     })
     return createdProperty
@@ -99,7 +112,7 @@ export class VocabulariesController extends Controller {
     const createdProperty = vocabs.createClass(vocab, {
       ...requestBody,
       creator: {
-        webId: (request as { session?: Session }).session?.info.webId as string,
+        webId: request.res?.locals.session?.info.webId as string,
       },
     })
     return createdProperty

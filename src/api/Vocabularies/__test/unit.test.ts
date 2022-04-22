@@ -35,10 +35,26 @@ describe('Get Methods', () => {
     expect(properties).toHaveLength(1)
   })
 
+  it('should get one property of vocab', async () => {
+    const prop = 'name'
+    const property = await vocabs.getProperty('foaf', prop)
+    expect(!!property).toBeTruthy()
+    expect(property?.name).toBe(prop)
+    expect(property?.slug).toBe(prop)
+  })
+
   it('should list all classes of vocab', async () => {
     const classes = await vocabs.getClasses('foaf')
     expect(!!classes).toBeTruthy()
     expect(classes).toHaveLength(1)
+  })
+
+  it('should get one class of vocab', async () => {
+    const cl = 'Agent'
+    const rdfClass = await vocabs.getClass('foaf', cl)
+    expect(!!rdfClass).toBeTruthy()
+    expect(rdfClass?.name).toBe(cl)
+    expect(rdfClass?.slug).toBe(cl)
   })
 })
 
@@ -70,8 +86,8 @@ describe('Create Methods', () => {
   })
 
   it('should create a new class in a vocab', async () => {
-    const vocab = 'solid'
-    const classname = 'Account'
+    const vocab = 'foaf'
+    const classname = 'Person'
     const creatorWebId = testUserWebId.replace('tester', 'tester2')
     const createdClass = await vocabs.createClass(vocab, {
       name: classname,
@@ -81,7 +97,7 @@ describe('Create Methods', () => {
     expect(createdClass?.name).toBe(classname)
     expect(createdClass?.slug).toBe(classname)
     const vocabulary = await vocabRepo.findOne({
-      where: { slug: 'solid' },
+      where: { slug: 'foaf' },
       relations: { contributors: true },
     })
     expect(

@@ -47,6 +47,7 @@ server.use(async (req, res, next) => {
     }
   }
   if (process.env.NODE_ENV === 'test') {
+    console.debug(req.headers['test-webid'])
     res.locals.session = {
       info: { webId: req.headers['test-webid'], isLoggedIn: true },
     }

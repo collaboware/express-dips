@@ -18,49 +18,6 @@ const rdfClassesRepo = IPSDataSource.getRepository<RdfClass>('RdfClass')
 const propertiesRepo = IPSDataSource.getRepository<Property>('Property')
 
 export class VocabularyService {
-  async getAll(): Promise<Vocabulary[]> {
-    const vocabularies = await vocabRepo.find({
-      take: 10,
-    })
-    return vocabularies
-  }
-
-  async getOne(slug: string): Promise<Vocabulary | null> {
-    const vocabulary = await vocabRepo.findOne({
-      where: { slug },
-    })
-    return vocabulary
-  }
-
-  async getProperties(slug: string): Promise<Property[]> {
-    const properties = await propertiesRepo.find({
-      where: { vocab: { slug } },
-    })
-    return properties
-  }
-
-  async getClasses(slug: string): Promise<RdfClass[]> {
-    const classes = await rdfClassesRepo.find({
-      where: { vocab: { slug } },
-    })
-    return classes
-  }
-
-  async create(
-    name: string,
-    creator: string,
-    slug?: string
-  ): Promise<Vocabulary> {
-    const vocabulary = await vocabRepo
-      .create({
-        name: name,
-        slug: slug ?? toCamelCase(name),
-      })
-      .save()
-    await this.addContributor(vocabulary.slug, { webId: creator })
-    return vocabulary
-  }
-
   private async addContributor(
     vocab: string,
     contributor: FindOptionsWhere<User>
@@ -81,6 +38,76 @@ export class VocabularyService {
     return vocabulary
   }
 
+  async getAll(): Promise<Vocabulary[]> {
+    const vocabularies = await vocabRepo.find({
+      take: 10,
+    })
+    return vocabularies
+  }
+
+  async getOne(slug: string): Promise<Vocabulary | null> {
+    const vocabulary = await vocabRepo.findOne({
+      where: { slug },
+      relations: { contributors: true },
+    })
+    return vocabulary
+  }
+
+  async getProperties(slug: string): Promise<Property[]> {
+    const properties = await propertiesRepo.find({
+      where: { vocab: { slug } },
+    })
+    return properties
+  }
+
+  async getProperty(slug: string, propSlug: string): Promise<Property | null> {
+    const prop = await propertiesRepo.findOne({
+      where: {
+        vocab: { slug },
+        slug: propSlug,
+      },
+      relations: {
+        vocab: { contributors: true },
+      },
+    })
+    return prop
+  }
+
+  async getClasses(slug: string): Promise<RdfClass[]> {
+    const classes = await rdfClassesRepo.find({
+      where: { vocab: { slug } },
+    })
+    return classes
+  }
+
+  async getClass(slug: string, cls: string): Promise<RdfClass | null> {
+    const rdfClass = await rdfClassesRepo.findOne({
+      where: {
+        vocab: { slug },
+        slug: cls,
+      },
+      relations: {
+        vocab: { contributors: true },
+      },
+    })
+    return rdfClass
+  }
+
+  async create(
+    name: string,
+    creator: string,
+    slug?: string
+  ): Promise<Vocabulary> {
+    const vocabulary = await vocabRepo
+      .create({
+        name: name,
+        slug: slug ?? toCamelCase(name),
+      })
+      .save()
+    await this.addContributor(vocabulary.slug, { webId: creator })
+    return (await this.getOne(vocabulary.slug)) as Vocabulary
+  }
+
   async createProperty(
     vocab: string,
     params: PropertyCreationParams
@@ -93,14 +120,12 @@ export class VocabularyService {
       .create({
         name: params.name,
         slug: params.slug ?? toCamelCase(params.name),
-        domain: params.domain ? { slug: params.domain } : undefined,
-        range: params.range ? { slug: params.range } : undefined,
         vocab: editedVocab as Vocabulary,
       })
       .save()
 
     await this.addContributor(vocab, params.creator)
-    return property
+    return (await this.getProperty(vocab, property.slug)) as Property
   }
 
   async createClass(
@@ -115,12 +140,11 @@ export class VocabularyService {
       .create({
         name: params.name,
         slug: params.slug ?? toPascalCase(params.name),
-        inherits: { slug: (params as ClassCreationParams).inherits },
         vocab: editedVocab as Vocabulary,
       })
       .save()
 
     await this.addContributor(vocab, params.creator)
-    return createdClass
+    return (await this.getClass(vocab, createdClass.slug)) as RdfClass
   }
 }
