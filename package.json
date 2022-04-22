@@ -55,7 +55,7 @@
     "eslint-plugin-prettier": "3.4.1",
     "husky": "7.0.4",
     "jest": "^27.5.1",
-    "lint-staged": "11.2.6",
+    "lint-staged": "12.4.0",
     "nodemon": "2.0.15",
     "openapi-typescript-codegen": "^0.21.0",
     "prettier": "2.6.2",
