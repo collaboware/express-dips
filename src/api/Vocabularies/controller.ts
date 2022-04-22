@@ -13,11 +13,14 @@ import {
 
 import {
   ClassCreationParams,
+  ClassUpdateParams,
   Property,
   PropertyCreationParams,
+  PropertyUpdateParams,
   RdfClass,
   Vocabulary,
   VocabularyCreationParams,
+  VocabularyUpdateParams,
 } from './model'
 import { VocabularyService } from './service'
 
@@ -116,5 +119,56 @@ export class VocabulariesController extends Controller {
       },
     })
     return createdProperty
+  }
+
+  @SuccessResponse('201', 'Updated') // Custom success response
+  @Security('cookie')
+  @Post('{vocab}')
+  public async updateVocab(
+    @Path() vocab: string,
+    @Body() body: VocabularyUpdateParams,
+    @Request() request: express.Request
+  ): Promise<Vocabulary> {
+    this.setStatus(201)
+    const vocabulary = await vocabs.update(
+      vocab,
+      request.res?.locals.session?.info.webId as string,
+      body
+    )
+    return vocabulary
+  }
+
+  @SuccessResponse('201', 'Updated') // Custom success response
+  @Security('cookie')
+  @Post('{vocab}/{propertyOrClass}')
+  public async updatePropertyOrClass(
+    @Path() vocab: string,
+    @Path() propertyOrClass: string,
+    @Body() body: PropertyUpdateParams | ClassUpdateParams,
+    @Request() request: express.Request
+  ): Promise<Property | RdfClass | null> {
+    this.setStatus(201)
+    const property = await vocabs.getProperty(vocab, propertyOrClass)
+    if (property) {
+      const updatedProperty = await vocabs.updateProperty(
+        vocab,
+        propertyOrClass,
+        request.res?.locals.session.info.webId,
+        body
+      )
+      return updatedProperty
+    }
+    const rdfClass = await vocabs.getClass(vocab, propertyOrClass)
+    if (rdfClass) {
+      const updatedClass = await vocabs.updateClass(
+        vocab,
+        propertyOrClass,
+        request.res?.locals.session.info.webId,
+        body
+      )
+      return updatedClass
+    }
+    this.setStatus(404)
+    return null
   }
 }

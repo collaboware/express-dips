@@ -9,6 +9,7 @@ import {
   ManyToOne,
   OneToOne,
   FindOptionsWhere,
+  DeepPartial,
 } from 'typeorm'
 
 import { User } from '../User/model'
@@ -76,21 +77,26 @@ export interface ClassCreationParams extends BaseCreationParams {
   inherits?: string
 }
 
-export interface VocabUpdateParams {
-  name: string
-  description: string
+export interface VocabularyUpdateParams {
+  name?: string
+  description?: string
+  slug?: string
+  link?: string
 }
 
 export interface PropertyUpdateParams {
-  name: string
-  domain: string
-  range: XSD_DATATYPES
+  name?: string
+  slug?: string
+  description?: string
+  domain?: DeepPartial<RdfClass>
+  range?: DeepPartial<RdfClass>
 }
 
 export interface ClassUpdateParams {
-  name: string
-  inherits: string
-  description: string
+  name?: string
+  slug?: string
+  description?: string
+  inherits?: DeepPartial<RdfClass>
 }
 
 @Entity()

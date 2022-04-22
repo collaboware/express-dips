@@ -17,6 +17,18 @@ const users: Partial<User>[] = [
     name: 'Tester',
     webId: testUserWebId.replace('tester', 'tester3'),
   },
+  {
+    name: 'Tester',
+    webId: testUserWebId.replace('tester', 'tester4'),
+  },
+  {
+    name: 'Tester',
+    webId: testUserWebId.replace('tester', 'tester5'),
+  },
+  {
+    name: 'Tester',
+    webId: testUserWebId.replace('tester', 'tester6'),
+  },
 ]
 
 export const seedUser = async (db: DataSource): Promise<User[]> => {

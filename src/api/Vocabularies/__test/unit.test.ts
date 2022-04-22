@@ -125,3 +125,72 @@ describe('Create Methods', () => {
     ).toBeTruthy()
   })
 })
+
+describe('Update Methods', () => {
+  it('should update a vocab', async () => {
+    const name = 'Solid Terms (2)'
+    const slug = 'solid'
+    const webId = testUserWebId.replace('tester', 'tester4')
+    const vocabulary = await vocabs.update(slug, webId, { name })
+    expect(!!vocabulary).toBeTruthy()
+    expect(vocabulary?.name).toBe(name)
+    expect(vocabulary?.slug).toBe(slug)
+    const updatedVocabulary = await vocabRepo.findOne({
+      where: { slug: 'solid' },
+      relations: { contributors: true },
+    })
+    expect(
+      updatedVocabulary?.contributors.find((user) => user.webId === webId)
+    ).toBeTruthy()
+  })
+
+  it('should update a class', async () => {
+    const vocab = 'foaf'
+    const classname = 'Person'
+    const newClassname = classname + ' (2)'
+    const creatorWebId = testUserWebId.replace('tester', 'tester5')
+    const updatedClass = await vocabs.updateClass(
+      vocab,
+      classname,
+      creatorWebId,
+      {
+        name: newClassname,
+      }
+    )
+    expect(!!updatedClass).toBeTruthy()
+    expect(updatedClass?.name).toBe(newClassname)
+    expect(updatedClass?.slug).toBe(classname)
+    const vocabulary = await vocabRepo.findOne({
+      where: { slug: 'foaf' },
+      relations: { contributors: true },
+    })
+    expect(
+      vocabulary?.contributors.find((user) => user.webId === creatorWebId)
+    ).toBeTruthy()
+  })
+
+  it('should update a property', async () => {
+    const vocab = 'solid'
+    const property = 'notification'
+    const newPropertyName = 'Notification'
+    const webId = testUserWebId.replace('tester', 'tester6')
+    const updatedProperty = await vocabs.updateProperty(
+      vocab,
+      property,
+      webId,
+      {
+        name: newPropertyName,
+      }
+    )
+    expect(!!updatedProperty).toBeTruthy()
+    expect(updatedProperty?.name).toBe(newPropertyName)
+    expect(updatedProperty?.slug).toBe(property)
+    const vocabulary = await vocabRepo.findOne({
+      where: { slug: 'solid' },
+      relations: { contributors: true },
+    })
+    expect(
+      vocabulary?.contributors.find((user) => user.webId === webId)
+    ).toBeTruthy()
+  })
+})

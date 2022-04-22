@@ -10,6 +10,9 @@ import {
   RdfClass,
   ClassCreationParams,
   Vocabulary,
+  VocabularyUpdateParams,
+  PropertyUpdateParams,
+  ClassUpdateParams,
 } from './model'
 
 const userRepo = IPSDataSource.getRepository<User>('User')
@@ -146,5 +149,42 @@ export class VocabularyService {
 
     await this.addContributor(vocab, params.creator)
     return (await this.getClass(vocab, createdClass.slug)) as RdfClass
+  }
+
+  async update(
+    slug: string,
+    webId: string,
+    params: VocabularyUpdateParams
+  ): Promise<Vocabulary> {
+    await vocabRepo.update({ slug }, params)
+
+    await this.addContributor(slug, { webId })
+    return (await this.getOne(slug)) as Vocabulary
+  }
+
+  async updateProperty(
+    vocab: string,
+    slug: string,
+    webId: string,
+    params: PropertyUpdateParams
+  ): Promise<Property> {
+    const vocabulary = await this.getOne(vocab)
+    await propertiesRepo.update({ slug, vocab: { id: vocabulary?.id } }, params)
+
+    await this.addContributor(vocab, { webId })
+    return (await this.getProperty(vocab, slug)) as Property
+  }
+
+  async updateClass(
+    vocab: string,
+    slug: string,
+    webId: string,
+    params: ClassUpdateParams
+  ): Promise<Property | RdfClass> {
+    const vocabulary = await this.getOne(vocab)
+    await rdfClassesRepo.update({ slug, vocab: { id: vocabulary?.id } }, params)
+
+    await this.addContributor(vocab, { webId })
+    return (await this.getClass(vocab, slug)) as RdfClass
   }
 }

@@ -95,4 +95,74 @@ describe('Post Endpoints', () => {
       !!res.body.vocab.contributors.find((user: User) => user.webId === creator)
     ).toBeTruthy()
   })
+
+  it('should update a vocab', async () => {
+    const vocab = 'solid'
+    const name = 'Solid Terms (2)'
+    const webId = testUserWebId.replace('tester', 'tester4')
+    const res = await TestUtils.requestAs(
+      request(server).post(`/api/vocabs/${vocab}`).send({ name }),
+      webId
+    )
+    expect(res.statusCode).toEqual(201)
+    expect(res.body.name).toEqual(name)
+    expect(res.body.slug).toEqual(vocab)
+    expect(
+      !!res.body.contributors.find((user: User) => user.webId === webId)
+    ).toBeTruthy()
+  })
+
+  it('should update a class', async () => {
+    const vocab = 'solid'
+    const cls = 'Account'
+    const clsName = 'Account (2)'
+    const webId = testUserWebId.replace('tester', 'tester5')
+    const res = await TestUtils.requestAs(
+      request(server)
+        .post(`/api/vocabs/${vocab}/${cls}`)
+        .send({ name: clsName }),
+      webId
+    )
+    expect(res.statusCode).toEqual(201)
+    expect(res.body.name).toEqual(clsName)
+    expect(res.body.slug).toEqual(cls)
+    expect(res.body.vocab.slug).toEqual(vocab)
+    expect(
+      !!res.body.vocab.contributors.find((user: User) => user.webId === webId)
+    ).toBeTruthy()
+  })
+
+  it('should update a property', async () => {
+    const vocab = 'solid'
+    const webId = testUserWebId.replace('tester', 'tester6')
+    const prop = 'notification'
+    const propName = 'Notification'
+    const res = await TestUtils.requestAs(
+      request(server)
+        .post(`/api/vocabs/${vocab}/${prop}`)
+        .send({ name: propName }),
+      webId
+    )
+    expect(res.statusCode).toEqual(201)
+    expect(res.body.name).toEqual(propName)
+    expect(res.body.slug).toEqual(prop)
+    expect(res.body.vocab.slug).toEqual(vocab)
+    expect(
+      !!res.body.vocab.contributors.find((user: User) => user.webId === webId)
+    ).toBeTruthy()
+  })
+
+  it('should fail updating a nonexistent property', async () => {
+    const vocab = 'solid'
+    const webId = testUserWebId.replace('tester', 'tester6')
+    const prop = 'notificationzzz'
+    const propName = 'Notification'
+    const res = await TestUtils.requestAs(
+      request(server)
+        .post(`/api/vocabs/${vocab}/${prop}`)
+        .send({ name: propName }),
+      webId
+    )
+    expect(res.statusCode).toEqual(404)
+  })
 })
