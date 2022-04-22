@@ -1,5 +1,7 @@
 name: Jest tests
 on: push
+permissions:
+  pull-requests: read
 jobs:
   jest:
     services:
@@ -35,6 +37,11 @@ jobs:
     runs-on: ubuntu-latest
     if: github.actor == 'dependabot[bot]'
     steps:
+      - name: Get Pull Request Number
+        id: pr
+        run: echo "::set-output name=pull_request_number::$(gh pr view --json number -q .number || echo "")"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: automerge
         uses: actions/github-script@0.2.0
         with:
@@ -42,12 +49,12 @@ jobs:
             github.pullRequests.createReview({
               owner: context.payload.repository.owner.login,
               repo: context.payload.repository.name,
-              pull_number: context.payload.pull_request.number,
+              pull_number: ${{ steps.pr.outputs.pull_request_number }},
               event: 'APPROVE'
             })
             github.pullRequests.merge({
               owner: context.payload.repository.owner.login,
               repo: context.payload.repository.name,
-              pull_number: context.payload.pull_request.number
+              pull_number: ${{ steps.pr.outputs.pull_request_number }},
             })
           github-token: ${{ github.token }}
