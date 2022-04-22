@@ -55,6 +55,6 @@ jobs:
             github.pullRequests.merge({
               owner: context.payload.repository.owner.login,
               repo: context.payload.repository.name,
-              pull_number: ${{ steps.pr.outputs.pull_request_number }},
+              pull_number: ${{ steps.pr.outputs.pull_request_number }}
             })
           github-token: ${{ github.token }}
