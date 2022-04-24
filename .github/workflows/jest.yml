@@ -1,7 +1,7 @@
 name: Jest tests
 on: pull_request
 permissions:
-  pull-requests: read
+  pull-requests: write
 jobs:
   jest:
     services:
