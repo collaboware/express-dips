@@ -48,5 +48,5 @@ jobs:
     steps:
       - uses: reitermarkus/automerge@v2
         with:
-          token: ${{ secrets.MY_GITHUB_TOKEN }}
+          token: ${{ github.token }}
           pull-request: ${{ github.event.inputs.pull-request }}
