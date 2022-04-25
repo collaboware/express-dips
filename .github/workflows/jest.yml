@@ -1,7 +1,5 @@
 name: Jest tests
-on: pull_request
-permissions:
-  pull-requests: write
+on: push
 jobs:
   jest:
     services:
@@ -33,28 +31,3 @@ jobs:
         run: yarn
       - name: Run tests
         run: yarn test
-  automerge:
-    runs-on: ubuntu-latest
-    if: github.actor == 'dependabot[bot]'
-    steps:
-      - uses: jwalton/gh-find-current-pr@v1
-        id: findPr
-        with:
-          # Can be "open", "closed", or "all".  Defaults to "open".
-          state: open
-      - name: automerge
-        uses: actions/github-script@0.2.0
-        with:
-          script: |
-            github.pullRequests.createReview({
-              owner: context.payload.repository.owner.login,
-              repo: context.payload.repository.name,
-              pull_number: ${{ steps.findPr.outputs.number }},
-              event: 'APPROVE'
-            })
-            github.pullRequests.merge({
-              owner: context.payload.repository.owner.login,
-              repo: context.payload.repository.name,
-              pull_number: ${{ steps.findPr.outputs.number }}
-            })
-          github-token: ${{ github.token }}
