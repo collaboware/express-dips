@@ -53,5 +53,6 @@ jobs:
         name: automerge
         uses: "pascalgn/automerge-action@v0.15.2"
         env:
+          MERGE_LABELS: "dependencies"
           GITHUB_TOKEN: "${{ github.token }}"
           PULL_REQUEST: "${{ github.event.inputs.pull-request }}"
