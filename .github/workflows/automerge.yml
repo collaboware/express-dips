@@ -49,6 +49,7 @@ jobs:
   automerge:
     runs-on: ubuntu-latest
     if: github.actor == 'dependabot[bot]'
+    needs: test
     steps:
       - id: automerge
         name: automerge
