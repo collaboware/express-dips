@@ -1,7 +1,7 @@
 name: Automerge
 
 on:
-  pull_request_target:
+  pull_request:
     types:
       - opened
       - synchronized
@@ -10,6 +10,9 @@ on:
       - labeled
       - unlabeled
       - ready_for_review
+      
+permissions:
+  pull-requests: write
 
 jobs:
   test:
@@ -46,7 +49,9 @@ jobs:
     runs-on: ubuntu-latest
     if: github.actor == 'dependabot[bot]'
     steps:
-      - uses: reitermarkus/automerge@v2
-        with:
-          token: ${{ github.token }}
-          pull-request: ${{ github.event.inputs.pull-request }}
+      - id: automerge
+        name: automerge
+        uses: "pascalgn/automerge-action@v0.15.2"
+        env:
+          GITHUB_TOKEN: "${{ github.token }}"
+          PULL_REQUEST: "${{ github.event.inputs.pull-request }}"
