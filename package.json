@@ -56,7 +56,7 @@
     "gh-pages": "3.2.3",
     "husky": "7.0.4",
     "jest": "^27.5.1",
-    "lint-staged": "12.4.0",
+    "lint-staged": "12.4.2",
     "nodemon": "2.0.15",
     "openapi-typescript-codegen": "^0.21.0",
     "prettier": "2.6.2",
