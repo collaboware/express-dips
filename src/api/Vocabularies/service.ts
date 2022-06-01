@@ -4,6 +4,7 @@ import { FindOptionsWhere } from 'typeorm'
 import { IPSDataSource } from '../datasource'
 import { User } from '../User/model'
 
+import { ExtractedClass, extractVocabulary } from './extract'
 import {
   Property,
   PropertyCreationParams,
@@ -20,7 +21,45 @@ const vocabRepo = IPSDataSource.getRepository<Vocabulary>('Vocabulary')
 const rdfClassesRepo = IPSDataSource.getRepository<RdfClass>('RdfClass')
 const propertiesRepo = IPSDataSource.getRepository<Property>('Property')
 
+export enum ErrorMessages {
+  VOCAB_NOT_FOUND = 'The specified Vocabulary does not exist',
+  VOCAB_ALREADY_EXISTS = 'The specified Vocabulary already exists',
+}
+
+export const splitLinkIntoVocabAndMember = (link: string): [string, string] => {
+  const hashIndex = link.lastIndexOf('#') ?? link.lastIndexOf('/')
+  const vocab = link.substring(0, hashIndex + 1)
+  const member = link.replace(vocab, '')
+  return [vocab, member]
+}
+
 export class VocabularyService {
+  private async _addExtractedClasses(
+    vocab: string,
+    classes: ClassCreationParams[]
+  ): Promise<RdfClass[]> {
+    return (
+      await Promise.all(
+        classes.map(async (cls) => {
+          return await this.createClass(vocab, cls)
+        })
+      )
+    ).filter((cls) => typeof cls !== 'string') as RdfClass[]
+  }
+
+  private async _addExtractedProperties(
+    vocab: string,
+    properties: PropertyCreationParams[]
+  ): Promise<Property[]> {
+    return (
+      await Promise.all(
+        properties.map(async (prop) => {
+          return await this.createProperty(vocab, prop)
+        })
+      )
+    ).filter((prop) => typeof prop !== 'string') as Property[]
+  }
+
   private async addContributor(
     vocab: string,
     contributor: FindOptionsWhere<User>
@@ -99,31 +138,119 @@ export class VocabularyService {
   async create(
     name: string,
     creator: string,
-    slug?: string
+    slug?: string,
+    link?: string
   ): Promise<Vocabulary> {
     const vocabulary = await vocabRepo
       .create({
         name: name,
         slug: slug ?? toCamelCase(name),
+        link,
       })
       .save()
     await this.addContributor(vocabulary.slug, { webId: creator })
     return (await this.getOne(vocabulary.slug)) as Vocabulary
   }
 
+  async createFromLink(
+    link: string,
+    creator: string
+  ): Promise<Vocabulary | null> {
+    const extractedVocabulary = await extractVocabulary(link).catch(() => null)
+    if (!extractedVocabulary) {
+      return null
+    }
+    const vocabExists = !!(await this.getOne(extractedVocabulary.slug))
+    if (vocabExists) {
+      return null
+    }
+    const createdVocab = await this.create(
+      extractedVocabulary.name,
+      creator,
+      extractedVocabulary.slug,
+      extractedVocabulary.link
+    )
+    const rdfClasses = await Promise.all(
+      extractedVocabulary.classes.map(async (cls: ExtractedClass) => {
+        const [parentClassVocabLink, parentClass] = cls.inherits
+          ? splitLinkIntoVocabAndMember(cls.inherits)
+          : []
+        const inherits =
+          cls.inherits &&
+          (await rdfClassesRepo.findOne({
+            where: {
+              slug: parentClass,
+              vocab: { link: parentClassVocabLink },
+            },
+          }))
+        return {
+          ...cls,
+          creator: { webId: creator },
+          inherits: inherits || undefined,
+        }
+      })
+    )
+    await this._addExtractedClasses(createdVocab.slug, rdfClasses)
+    const properties = await Promise.all(
+      extractedVocabulary.properties.map(async (prop) => {
+        const [domainVocabLink, domainClass] = prop.domain
+          ? splitLinkIntoVocabAndMember(prop.domain)
+          : [null, null]
+        const domain =
+          prop.domain &&
+          domainVocabLink &&
+          domainClass &&
+          (await rdfClassesRepo.findOne({
+            where: {
+              vocab: { link: domainVocabLink },
+              slug: domainClass,
+            },
+          }))
+        const [rangeVocabLink, rangeClass] = prop.range
+          ? splitLinkIntoVocabAndMember(prop.range)
+          : [null, null]
+        const range =
+          prop.range &&
+          rangeVocabLink &&
+          rangeClass &&
+          (await rdfClassesRepo.findOne({
+            where: {
+              vocab: { link: rangeVocabLink },
+              slug: rangeClass,
+            },
+          }))
+        return {
+          name: prop.name,
+          slug: prop.slug,
+          domain: domain || undefined,
+          range: range || undefined,
+          creator: { webId: creator },
+        }
+      })
+    )
+    await this._addExtractedProperties(createdVocab.slug, properties)
+    await this.addContributor(createdVocab.slug, { webId: creator })
+    return (await this.getOne(createdVocab.slug)) as Vocabulary
+  }
+
   async createProperty(
     vocab: string,
     params: PropertyCreationParams
-  ): Promise<Property> {
+  ): Promise<Property | string> {
     const editedVocab = await vocabRepo.findOne({
       where: { slug: vocab },
       relations: { contributors: true },
     })
+    if (!editedVocab) {
+      return ErrorMessages.VOCAB_NOT_FOUND
+    }
     const property = await propertiesRepo
       .create({
         name: params.name,
         slug: params.slug ?? toCamelCase(params.name),
         vocab: editedVocab as Vocabulary,
+        domain: params.domain ?? undefined,
+        range: params.range ?? undefined,
       })
       .save()
 
@@ -134,21 +261,26 @@ export class VocabularyService {
   async createClass(
     vocab: string,
     params: ClassCreationParams
-  ): Promise<RdfClass> {
+  ): Promise<RdfClass | string> {
     const editedVocab = await vocabRepo.findOne({
       where: { slug: vocab },
       relations: { contributors: true },
     })
-    const createdClass = await rdfClassesRepo
+    if (!editedVocab) {
+      return ErrorMessages.VOCAB_NOT_FOUND
+    }
+    console.debug(params.inherits)
+    const createdCls = await rdfClassesRepo
       .create({
         name: params.name,
         slug: params.slug ?? toPascalCase(params.name),
         vocab: editedVocab as Vocabulary,
+        inherits: params.inherits ?? undefined,
       })
       .save()
 
     await this.addContributor(vocab, params.creator)
-    return (await this.getClass(vocab, createdClass.slug)) as RdfClass
+    return (await this.getClass(vocab, createdCls.slug)) as RdfClass
   }
 
   async update(

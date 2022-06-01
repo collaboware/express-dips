@@ -1,15 +1,15 @@
 import {
-  Entity,
-  Column,
-  PrimaryGeneratedColumn,
-  ManyToMany,
-  JoinTable,
   BaseEntity,
-  OneToMany,
-  ManyToOne,
-  OneToOne,
-  FindOptionsWhere,
+  Column,
   DeepPartial,
+  Entity,
+  FindOptionsWhere,
+  JoinTable,
+  ManyToMany,
+  ManyToOne,
+  OneToMany,
+  OneToOne,
+  PrimaryGeneratedColumn,
 } from 'typeorm'
 
 import { User } from '../User/model'
@@ -62,19 +62,22 @@ interface BaseCreationParams {
 }
 
 export interface VocabularyCreationParams extends BaseCreationParams {
-  name: string
+  name?: string
   slug?: string
+  link?: string
 }
 
 export interface PropertyCreationParams extends BaseCreationParams {
   name: string
   slug?: string
+  domain?: RdfClass
+  range?: RdfClass
 }
 
 export interface ClassCreationParams extends BaseCreationParams {
   name: string
   slug?: string
-  inherits?: string
+  inherits?: RdfClass
 }
 
 export interface VocabularyUpdateParams {
@@ -120,7 +123,7 @@ export class Vocabulary extends BaseEntity {
   @Column()
   name: string
 
-  @Column()
+  @Column({ unique: true })
   slug: string
 
   @Column({ nullable: true })
@@ -147,7 +150,7 @@ export class RdfClass extends BaseEntity {
   @Column()
   name: string
 
-  @Column()
+  @Column({ unique: true })
   slug: string
 
   @Column({ nullable: true })
@@ -177,7 +180,7 @@ export class Property extends BaseEntity {
   @Column()
   name: string
 
-  @Column()
+  @Column({ unique: true })
   slug: string
 
   @Column({ nullable: true })

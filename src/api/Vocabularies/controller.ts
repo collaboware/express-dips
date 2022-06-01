@@ -76,14 +76,24 @@ export class VocabulariesController extends Controller {
   public async createVocab(
     @Body() vocab: Omit<VocabularyCreationParams, 'creator'>,
     @Request() request: express.Request
-  ): Promise<Vocabulary> {
+  ): Promise<Vocabulary | null> {
     this.setStatus(201)
-    const vocabulary = await vocabs.create(
-      vocab.name,
-      request.res?.locals.session?.info.webId as string,
-      vocab.slug
-    )
-    return vocabulary
+    if (vocab.name && vocab.slug) {
+      const vocabulary = await vocabs.create(
+        vocab.name,
+        request.res?.locals.session?.info.webId as string,
+        vocab.slug
+      )
+      return vocabulary
+    } else if (vocab.link) {
+      const vocabulary = await vocabs.createFromLink(
+        vocab.link,
+        request.res?.locals.session?.info.webId as string
+      )
+      if (vocabulary) return vocabulary
+    }
+    this.setStatus(403)
+    return null
   }
 
   @SuccessResponse('201', 'Created') // Custom success response
@@ -93,14 +103,17 @@ export class VocabulariesController extends Controller {
     @Path() vocab: string,
     @Body() requestBody: Omit<PropertyCreationParams, 'creator'>,
     @Request() request: express.Request
-  ): Promise<Property | RdfClass> {
+  ): Promise<Property | RdfClass | string> {
     this.setStatus(201)
-    const createdProperty = vocabs.createProperty(vocab, {
+    const createdProperty = await vocabs.createProperty(vocab, {
       ...requestBody,
       creator: {
         webId: request.res?.locals.session?.info.webId as string,
       },
     })
+    if (typeof createdProperty === 'string') {
+      this.setStatus(404)
+    }
     return createdProperty
   }
 
@@ -111,14 +124,17 @@ export class VocabulariesController extends Controller {
     @Path() vocab: string,
     @Body() requestBody: Omit<ClassCreationParams, 'creator'>,
     @Request() request: express.Request
-  ): Promise<Property | RdfClass> {
+  ): Promise<Property | RdfClass | string> {
     this.setStatus(201)
-    const createdProperty = vocabs.createClass(vocab, {
+    const createdProperty = await vocabs.createClass(vocab, {
       ...requestBody,
       creator: {
         webId: request.res?.locals.session?.info.webId as string,
       },
     })
+    if (typeof createdProperty === 'string') {
+      this.setStatus(404)
+    }
     return createdProperty
   }
 

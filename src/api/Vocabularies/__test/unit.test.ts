@@ -1,9 +1,10 @@
 import { Repository } from 'typeorm'
 
+import { RdfClass } from '../../../generated/openapi'
 import { IPSDataSource } from '../../datasource'
 import { seed } from '../../seed'
 import { testUserWebId } from '../../seed/user'
-import { Vocabulary } from '../model'
+import { Property, Vocabulary } from '../model'
 import { VocabularyService } from '../service'
 
 let vocabs: VocabularyService
@@ -85,14 +86,59 @@ describe('Create Methods', () => {
     expect(vocabulary?.slug).toBe('solidTerms')
   })
 
+  it('should create a vocab from a link', async () => {
+    const link = 'http://www.w3.org/2000/01/rdf-schema'
+    const name = 'The RDF Schema vocabulary (RDFS)'
+    const createdVocabulary = await vocabs.createFromLink(link, testUserWebId)
+    expect(!!createdVocabulary).toBeTruthy()
+    expect(createdVocabulary?.name).toBe(name)
+    expect(createdVocabulary?.slug).toBe('rdfs')
+    const vocabulary = await vocabRepo.findOne({
+      where: { slug: 'rdfs' },
+      relations: {
+        contributors: true,
+        classes: { properties: true },
+        properties: { domain: true, range: true },
+      },
+    })
+
+    expect(
+      vocabulary?.classes.find((cls) => cls.properties.length !== 0)
+    ).toBeTruthy()
+    expect(vocabulary?.properties.find((prop) => !!prop.domain)).toBeTruthy()
+    expect(vocabulary?.properties.find((prop) => !!prop.range)).toBeTruthy()
+    expect(
+      vocabulary?.contributors.find((user) => user.webId === testUserWebId)
+    ).toBeTruthy()
+  }, 10000)
+
+  it('should not create a vocab from a link twice', async () => {
+    const link = 'http://www.w3.org/2000/01/rdf-schema'
+    const createdVocabulary = await vocabs.createFromLink(link, testUserWebId)
+    expect(!createdVocabulary).toBeTruthy()
+    expect(createdVocabulary).toBeNull()
+  }, 10000)
+
+  it('should not create a vocab from a bad link', async () => {
+    const link = 'http://www.w3.org/2000/01/rdf-schemaasdfasdf'
+    const vocabulary = await vocabs.createFromLink(link, testUserWebId)
+    expect(vocabulary).toBeNull()
+  }, 10000)
+
+  it('should not create a vocab from a bad link', async () => {
+    const link = 'https://dbpedia.org/page/Leonardo_da_Vinci'
+    const vocabulary = await vocabs.createFromLink(link, testUserWebId)
+    expect(vocabulary).toBeNull()
+  }, 20000)
+
   it('should create a new class in a vocab', async () => {
     const vocab = 'foaf'
     const classname = 'Person'
     const creatorWebId = testUserWebId.replace('tester', 'tester2')
-    const createdClass = await vocabs.createClass(vocab, {
+    const createdClass = (await vocabs.createClass(vocab, {
       name: classname,
       creator: { webId: creatorWebId },
-    })
+    })) as RdfClass
     expect(!!createdClass).toBeTruthy()
     expect(createdClass?.name).toBe(classname)
     expect(createdClass?.slug).toBe(classname)
@@ -109,10 +155,10 @@ describe('Create Methods', () => {
     const vocab = 'solid'
     const property = 'notification'
     const creatorWebId = testUserWebId.replace('tester', 'tester3')
-    const createdProperty = await vocabs.createProperty(vocab, {
+    const createdProperty = (await vocabs.createProperty(vocab, {
       name: property,
       creator: { webId: creatorWebId },
-    })
+    })) as Property
     expect(!!createdProperty).toBeTruthy()
     expect(createdProperty?.name).toBe(property)
     expect(createdProperty?.slug).toBe(property)
