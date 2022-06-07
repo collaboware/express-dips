@@ -27,7 +27,9 @@ export enum ErrorMessages {
 }
 
 export const splitLinkIntoVocabAndMember = (link: string): [string, string] => {
-  const hashIndex = link.lastIndexOf('#') ?? link.lastIndexOf('/')
+  const hashIndex =
+    (link.lastIndexOf('#') !== -1 && link.lastIndexOf('#')) ||
+    link.lastIndexOf('/')
   const vocab = link.substring(0, hashIndex + 1)
   const member = link.replace(vocab, '')
   return [vocab, member]
@@ -90,7 +92,11 @@ export class VocabularyService {
   async getOne(slug: string): Promise<Vocabulary | null> {
     const vocabulary = await vocabRepo.findOne({
       where: { slug },
-      relations: { contributors: true },
+      relations: {
+        contributors: true,
+        properties: true,
+        classes: true,
+      },
     })
     return vocabulary
   }

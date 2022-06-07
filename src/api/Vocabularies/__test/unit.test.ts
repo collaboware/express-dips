@@ -5,7 +5,7 @@ import { IPSDataSource } from '../../datasource'
 import { seed } from '../../seed'
 import { testUserWebId } from '../../seed/user'
 import { Property, Vocabulary } from '../model'
-import { VocabularyService } from '../service'
+import { splitLinkIntoVocabAndMember, VocabularyService } from '../service'
 
 let vocabs: VocabularyService
 let vocabRepo: Repository<Vocabulary>
@@ -14,6 +14,38 @@ beforeAll(async () => {
   await seed(true)
   vocabRepo = IPSDataSource.getRepository<Vocabulary>('Vocabulary')
   vocabs = new VocabularyService()
+})
+
+describe('URL Helper Methods', () => {
+  it('should split correctly for vocabs with trailing slash', () => {
+    const fileURL = 'https://example.com/'
+    const filename = 'example'
+    const [fileURLResult, filenameResult] = splitLinkIntoVocabAndMember(
+      fileURL + filename
+    )
+    expect(fileURLResult).toBe(fileURL)
+    expect(filenameResult).toBe(filename)
+  })
+
+  it('should split correctly for vocabs with hashes', () => {
+    const fileURL = 'https://example.com#'
+    const filename = 'example'
+    const [fileURLResult, filenameResult] = splitLinkIntoVocabAndMember(
+      fileURL + filename
+    )
+    expect(fileURLResult).toBe(fileURL)
+    expect(filenameResult).toBe(filename)
+  })
+
+  it('should split correctly for vocabs with hashes and trailing slash', () => {
+    const fileURL = 'https://example.com/#'
+    const filename = 'example'
+    const [fileURLResult, filenameResult] = splitLinkIntoVocabAndMember(
+      fileURL + filename
+    )
+    expect(fileURLResult).toBe(fileURL)
+    expect(filenameResult).toBe(filename)
+  })
 })
 
 describe('Get Methods', () => {
@@ -93,6 +125,7 @@ describe('Create Methods', () => {
     expect(!!createdVocabulary).toBeTruthy()
     expect(createdVocabulary?.name).toBe(name)
     expect(createdVocabulary?.slug).toBe('rdfs')
+
     const vocabulary = await vocabRepo.findOne({
       where: { slug: 'rdfs' },
       relations: {
@@ -101,7 +134,6 @@ describe('Create Methods', () => {
         properties: { domain: true, range: true },
       },
     })
-
     expect(
       vocabulary?.classes.find((cls) => cls.properties.length !== 0)
     ).toBeTruthy()
